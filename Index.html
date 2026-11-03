@@ -1,0 +1,341 @@
+```html
+<!DOCTYPE html>
+<html lang="gu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ટ્રેક્ટર હિસાબ - Tractor Hisab App</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Vadodara:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        agri: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Hind Vadodara', 'Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Hind Vadodara', 'Inter', sans-serif;
+            background-color: #f8fafc;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        @keyframes driveTractor {
+            0% { transform: translateX(-120%); }
+            100% { transform: translateX(100vw); }
+        }
+
+        .tractor-animation {
+            animation: driveTractor 14s linear infinite;
+        }
+
+        .nav-tab-active {
+            color: #16a34a;
+            border-bottom: 3px solid #16a34a;
+            font-weight: 700;
+        }
+
+        .interactive-card {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .interactive-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Print styles for clean PDF receipt printing */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #printableReceiptArea, #printableReceiptArea * {
+                visibility: visible;
+            }
+            #printableReceiptArea {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                padding: 20px;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen pb-24 md:pb-10">
+
+    <!-- Top Running Tractor Animation Banner -->
+    <div class="bg-agri-900 text-agri-100 overflow-hidden relative h-9 flex items-center border-b border-agri-700 shadow-inner no-print">
+        <div class="tractor-animation absolute whitespace-nowrap flex items-center gap-2">
+            <i class="fa-solid fa-tractor text-amber-400 text-lg"></i>
+            <span class="text-xs font-bold text-amber-300">જય જવાન, જય કિસાન • ટ્રેક્ટર હિસાબ ડિજિટલ ચોપડો</span>
+        </div>
+    </div>
+
+    <!-- Header & Navigation -->
+    <header class="bg-agri-800 text-white sticky top-0 z-30 shadow-md no-print">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3 space-x-reverse">
+                <div class="bg-amber-500 p-2 rounded-xl text-agri-900 font-bold text-xl">
+                    <i class="fa-solid fa-tractor"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold leading-tight">ટ્રેક્ટર હિસાબ</h1>
+                    <p class="text-xs text-agri-200">બે ભાઈઓનો ઓનલાઈન ડિજિટલ ચોપડો</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <!-- App Install Helper Button -->
+                <button onclick="openInstallModal()" class="bg-amber-500 hover:bg-amber-400 text-slate-900 text-xs font-bold px-3 py-1.5 rounded-xl shadow flex items-center gap-1.5">
+                    <i class="fa-solid fa-mobile-screen-button"></i>
+                    <span class="hidden sm:inline">એપ ઇન્સ્ટોલ કરો</span>
+                    <span class="sm:hidden">ઇન્સ્ટોલ</span>
+                </button>
+
+                <!-- User Brother Switcher -->
+                <div class="flex items-center bg-agri-900/70 p-1 rounded-full border border-agri-600">
+                    <button id="userBrother1Btn" onclick="setActiveBrother(1)" class="px-2.5 py-1 rounded-full text-xs font-bold transition bg-amber-500 text-slate-900 shadow">
+                        ભાઈ ૧
+                    </button>
+                    <button id="userBrother2Btn" onclick="setActiveBrother(2)" class="px-2.5 py-1 rounded-full text-xs font-medium transition text-agri-200 hover:text-white">
+                        ભાઈ ૨
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Navigation Bar -->
+        <nav class="bg-white border-b border-slate-200 text-slate-600 text-xs sm:text-sm font-medium shadow-sm">
+            <div class="max-w-6xl mx-auto px-2 flex justify-around md:justify-start md:gap-6 overflow-x-auto">
+                <button onclick="switchTab('dashboard')" id="tab-dashboard" class="py-3 px-2 flex items-center gap-1.5 nav-tab-active transition whitespace-nowrap">
+                    <i class="fa-solid fa-chart-pie text-base"></i>
+                    <span>ડેશબોર્ડ</span>
+                </button>
+                <button onclick="switchTab('dailyEntry')" id="tab-dailyEntry" class="py-3 px-2 flex items-center gap-1.5 transition whitespace-nowrap">
+                    <i class="fa-solid fa-circle-plus text-base text-agri-600"></i>
+                    <span>રોજનું કામ</span>
+                </button>
+                <button onclick="switchTab('farmers')" id="tab-farmers" class="py-3 px-2 flex items-center gap-1.5 transition whitespace-nowrap">
+                    <i class="fa-solid fa-users text-base text-blue-600"></i>
+                    <span>ખેડૂતોનું ખાતું</span>
+                </button>
+                <button onclick="switchTab('diesel')" id="tab-diesel" class="py-3 px-2 flex items-center gap-1.5 transition whitespace-nowrap">
+                    <i class="fa-solid fa-gas-pump text-base text-red-500"></i>
+                    <span>ડિઝલ ખર્ચ</span>
+                </button>
+                <button onclick="switchTab('reports')" id="tab-reports" class="py-3 px-2 flex items-center gap-1.5 transition whitespace-nowrap">
+                    <i class="fa-solid fa-file-invoice-dollar text-base text-amber-500"></i>
+                    <span>રિપોર્ટ</span>
+                </button>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-6xl mx-auto px-3 sm:px-4 pt-4 no-print">
+
+        <!-- ================= DASHBOARD TAB ================= -->
+        <section id="sec-dashboard" class="space-y-4">
+            
+            <div class="bg-gradient-to-r from-agri-700 to-agri-800 text-white p-4 rounded-2xl shadow flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                <div>
+                    <span class="text-xs bg-agri-900/60 text-amber-300 font-semibold px-2.5 py-0.5 rounded-full" id="currentRoleBadge">ભાઈ ૧ મોડ</span>
+                    <h2 class="text-xl font-bold mt-1">આજનો ટ્રેક્ટર નો હિસાબ</h2>
+                </div>
+                <button onclick="switchTab('dailyEntry')" class="w-full sm:w-auto bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-900 font-bold px-4 py-2 rounded-xl shadow transition text-sm flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-plus-circle"></i>
+                    <span>નવું કામ ઉમેરો</span>
+                </button>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm interactive-card">
+                    <p class="text-xs text-slate-500 font-medium">કુલ કામ (કમાણી)</p>
+                    <p class="text-lg sm:text-2xl font-bold text-slate-800 mt-1" id="statTotalEarnings">₹ 0</p>
+                </div>
+                <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm interactive-card">
+                    <p class="text-xs text-slate-500 font-medium">રોકડા મળ્યા (જમા)</p>
+                    <p class="text-lg sm:text-2xl font-bold text-emerald-600 mt-1" id="statReceivedCash">₹ 0</p>
+                </div>
+                <div class="bg-white p-3.5 rounded-2xl border border-amber-300 bg-amber-50/30 shadow-sm interactive-card">
+                    <p class="text-xs text-amber-800 font-medium">કુલ બાકી લેવાના</p>
+                    <p class="text-lg sm:text-2xl font-bold text-amber-600 mt-1" id="statPendingBalance">₹ 0</p>
+                </div>
+                <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm interactive-card">
+                    <p class="text-xs text-slate-500 font-medium">ડિઝલ ખર્ચ</p>
+                    <p class="text-lg sm:text-2xl font-bold text-red-600 mt-1" id="statDieselExpenses">₹ 0</p>
+                </div>
+            </div>
+
+            <!-- Recent Work Logs -->
+            <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-history text-agri-600"></i>
+                        <span>છેલ્લા કામની એન્ટ્રીઓ</span>
+                    </h3>
+                    <span class="text-xs text-slate-500" id="totalEntriesCount">0 એન્ટ્રી</span>
+                </div>
+
+                <div id="dashboardRecentList" class="divide-y divide-slate-100 max-h-96 overflow-y-auto mt-2">
+                    <!-- Dynamic Work Entries -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= DAILY WORK ENTRY TAB ================= -->
+        <section id="sec-dailyEntry" class="hidden space-y-4">
+            <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-sm max-w-2xl mx-auto">
+                <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+                    <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-pen-to-square text-agri-600"></i>
+                        <span id="formTitleText">રોજના કામની નવી એન્ટ્રી</span>
+                    </h2>
+                    <span class="text-xs bg-slate-100 text-slate-600 font-semibold px-2.5 py-1 rounded-full">
+                        તારીખ: <span id="entryFormDateLabel">આજે</span>
+                    </span>
+                </div>
+
+                <form id="dailyWorkForm" onsubmit="handleSaveWorkEntry(event)" class="space-y-4">
+                    <input type="hidden" id="editingWorkId" value="">
+
+                    <!-- Farmer Select Type Toggle -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">ખેડૂતનો પ્રકાર select કરો</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button type="button" id="btnTypeRegular" onclick="setFarmerType('regular')" class="py-2 px-3 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-2 border-agri-600 bg-agri-50 text-agri-800">
+                                <i class="fa-solid fa-user-check"></i> રેગ્યુલર ખેડૂત
+                            </button>
+                            <button type="button" id="btnTypeOneTime" onclick="setFarmerType('onetime')" class="py-2 px-3 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-2 border-slate-300 bg-slate-50 text-slate-600">
+                                <i class="fa-solid fa-user-plus"></i> અનિયમિત / ૧-ટાઈમ
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Farmer Selector -->
+                    <div id="regularFarmerGroup">
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="block text-xs font-semibold text-slate-600">ખેડૂતનું નામ પસંદ કરો *</label>
+                            <button type="button" onclick="openAddFarmerModal()" class="text-xs text-agri-700 font-bold hover:underline">+ નવો ઉમેરો</button>
+                        </div>
+                        <select id="entryFarmerSelect" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-agri-500 font-medium">
+                            <option value="">-- ખેડૂત પસંદ કરો --</option>
+                        </select>
+                    </div>
+
+                    <div id="onetimeFarmerGroup" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">ખેડૂતનું નામ *</label>
+                            <input type="text" id="entryOneTimeName" placeholder="દા.ત. રમેશભાઈ" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-agri-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">ગામ</label>
+                            <input type="text" id="entryOneTimeVillage" placeholder="દા.ત. અમરાપુર" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-agri-500 outline-none">
+                        </div>
+                    </div>
+
+                    <!-- Implement Selection -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-2">કયું કામ કર્યું? (ઓજાર પસંદ કરો)</label>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            <label class="cursor-pointer">
+                                <input type="radio" name="workImplement" value="રોટાવેટર" class="peer hidden" checked onchange="calculateWorkTotal()">
+                                <div class="p-2.5 rounded-xl border border-slate-200 text-center peer-checked:border-agri-600 peer-checked:bg-agri-50 peer-checked:text-agri-800 transition">
+                                    <i class="fa-solid fa-dharmachakra text-lg mb-0.5 block text-amber-500"></i>
+                                    <span class="text-xs font-bold">રોટાવેટર 🚜</span>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="workImplement" value="ચાંવડા" class="peer hidden" onchange="calculateWorkTotal()">
+                                <div class="p-2.5 rounded-xl border border-slate-200 text-center peer-checked:border-agri-600 peer-checked:bg-agri-50 peer-checked:text-agri-800 transition">
+                                    <i class="fa-solid fa-grip-lines text-lg mb-0.5 block text-agri-600"></i>
+                                    <span class="text-xs font-bold">ચાંવડા</span>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="workImplement" value="ખેડ" class="peer hidden" onchange="calculateWorkTotal()">
+                                <div class="p-2.5 rounded-xl border border-slate-200 text-center peer-checked:border-agri-600 peer-checked:bg-agri-50 peer-checked:text-agri-800 transition">
+                                    <i class="fa-solid fa-mountain text-lg mb-0.5 block text-blue-500"></i>
+                                    <span class="text-xs font-bold">ખેડ (ઉંડી)</span>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="workImplement" value="વાવણી" class="peer hidden" onchange="calculateWorkTotal()">
+                                <div class="p-2.5 rounded-xl border border-slate-200 text-center peer-checked:border-agri-600 peer-checked:bg-agri-50 peer-checked:text-agri-800 transition">
+                                    <i class="fa-solid fa-seedling text-lg mb-0.5 block text-emerald-600"></i>
+                                    <span class="text-xs font-bold">વાવણી 🌱</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Quantity & Billing Unit -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">ગણતરી એકમ</label>
+                            <select id="entryBillingUnit" onchange="calculateWorkTotal()" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs font-bold outline-none">
+                                <option value="વિઘા">વિઘા દીઠ</option>
+                                <option value="કલાક">કલાક દીઠ</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">માપ (વિઘા / કલાક) *</label>
+                            <input type="number" step="0.1" id="entryQuantity" placeholder="દા.ત. 4.5" oninput="calculateWorkTotal()" required class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-sm font-bold outline-none">
+                        </div>
+                    </div>
+
+                    <!-- Rate & Cash Received -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">ભાવ / રેટ (₹) *</label>
+                            <input type="number" id="entryRate" placeholder="દા.ત. 600" oninput="calculateWorkTotal()" required class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-sm font-bold outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">સ્થળ પર આપેલ રોકડા (₹)</label>
+                            <input type="number" id="entryPaid" placeholder="0" oninput="calculateWorkTotal()" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-sm font-bold text-emerald-600 outline-none">
+                        </div>
+                    </div>
+
+                    <!-- Output Calculation Display -->
+                    <div class="bg-slate-100 p-3 rounded-xl border border-slate-200 flex justify-between items-center text-xs">
+                        <div>
+                            <p class="text-slate-500">કુલ રકમ:</p>
+                            <p class="text-sm font-bold text-slate-800" id="calcTotalAmount">₹ 0</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-amber-8
